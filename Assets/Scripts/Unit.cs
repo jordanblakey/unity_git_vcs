@@ -11,87 +11,90 @@ using UnityEngine.AI;
 public abstract class Unit : MonoBehaviour,
     UIMainScene.IUIInfoContent
 {
-    public float Speed = 3;
+  public float Speed = 3;
 
-    protected NavMeshAgent m_Agent;
-    protected Building m_Target;
+  protected NavMeshAgent m_Agent;
+  protected Building m_Target;
 
-    protected void Awake()
+  protected void Awake()
+  {
+    m_Agent = GetComponent<NavMeshAgent>();
+    m_Agent.speed = Speed;
+    m_Agent.acceleration = 999;
+    m_Agent.angularSpeed = 999;
+  }
+
+  private void Start()
+  {
+    if (MainManager.Instance != null)
     {
-        m_Agent = GetComponent<NavMeshAgent>();
-        m_Agent.speed = Speed;
-        m_Agent.acceleration = 999;
-        m_Agent.angularSpeed = 999;
+      SetColor(MainManager.Instance.TeamColor);
     }
+  }
 
-    private void Start()
+  void SetColor(Color c)
+  {
+    var colorHandler = GetComponentInChildren<ColorHandler>();
+    if (colorHandler != null)
     {
-
+      colorHandler.SetColor(c);
     }
+  }
 
-    void SetColor(Color c)
+  private void Update()
+  {
+    if (m_Target != null)
     {
-        var colorHandler = GetComponentInChildren<ColorHandler>();
-        if (colorHandler != null)
-        {
-            colorHandler.SetColor(c);
-        }
+      float distance = Vector3.Distance(m_Target.transform.position, transform.position);
+      if (distance < 2.0f)
+      {
+        m_Agent.isStopped = true;
+        BuildingInRange();
+      }
     }
+  }
 
-    private void Update()
+  public virtual void GoTo(Building target)
+  {
+    m_Target = target;
+
+    if (m_Target != null)
     {
-        if (m_Target != null)
-        {
-            float distance = Vector3.Distance(m_Target.transform.position, transform.position);
-            if (distance < 2.0f)
-            {
-                m_Agent.isStopped = true;
-                BuildingInRange();
-            }
-        }
+      m_Agent.SetDestination(m_Target.transform.position);
+      m_Agent.isStopped = false;
     }
+  }
 
-    public virtual void GoTo(Building target)
-    {
-        m_Target = target;
-
-        if (m_Target != null)
-        {
-            m_Agent.SetDestination(m_Target.transform.position);
-            m_Agent.isStopped = false;
-        }
-    }
-
-    public virtual void GoTo(Vector3 position)
-    {
-        //we don't have a target anymore if we order to go to a random point.
-        m_Target = null;
-        m_Agent.SetDestination(position);
-        m_Agent.isStopped = false;
-    }
+  public virtual void GoTo(Vector3 position)
+  {
+    //we don't have a target anymore if we order to go to a random point.
+    m_Target = null;
+    m_Agent.SetDestination(position);
+    m_Agent.isStopped = false;
+  }
 
 
-    /// <summary>
-    /// Override this function to implement what should happen when in range of its target.
-    /// Note that this is called every frame the current target is in range, not only the first time we get in range! 
-    /// </summary>
-    protected abstract void BuildingInRange();
+  /// <summary>
+  /// Override this function to implement what should happen when in range of its target.
+  /// Note that this is called every frame the current target is in range, not only the first time we get in range!
+  /// </summary>
+  protected abstract void BuildingInRange();
 
-    //Implementing the IUIInfoContent interface so the UI know it should display the UI when this is clicked on.
-    //Implementation of all the functions are empty as default, but they are set as virtual so subclass units can
-    //override them to offer their own data to it.
-    public virtual string GetName()
-    {
-        return "Unit";
-    }
+  //Implementing the IUIInfoContent interface so the UI know it should display the UI when this is clicked on.
+  //Implementation of all the functions are empty as default, but they are set as virtual so subclass units can
+  //override them to offer their own data to it.
+  public virtual string GetName()
+  {
+    return "Unit";
+  }
 
-    public virtual string GetData()
-    {
-        return "";
-    }
+  public virtual string GetData()
+  {
+    return "";
+  }
 
-    public virtual void GetContent(ref List<Building.InventoryEntry> content)
-    {
-        
-    }
+  public virtual void GetContent(ref List<Building.InventoryEntry> content)
+  {
+
+  }
 }
